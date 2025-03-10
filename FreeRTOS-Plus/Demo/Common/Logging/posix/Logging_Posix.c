@@ -1,0 +1,90 @@
+/*
+ * FreeRTOS V202212.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * https://www.FreeRTOS.org
+ * https://github.com/FreeRTOS
+ *
+ */
+
+ /*-----------------------------------------------------------
+* Example console I/O wrappers.
+*----------------------------------------------------------*/
+
+#include <stdarg.h>
+#include <stdio.h>
+
+#include <FreeRTOS.h>
+#include <semphr.h>
+
+#include "logging.h"
+
+SemaphoreHandle_t xStdioMutex;
+StaticSemaphore_t xStdioMutexBuffer;
+
+void vLoggingInit( BaseType_t xLogToStdout,
+                   BaseType_t xLogToFile,
+                   BaseType_t xLogToUDP,
+                   uint32_t ulRemoteIPAddress,
+                   uint16_t usRemotePort )
+{
+    #if( configSUPPORT_STATIC_ALLOCATION == 1 )
+    {
+        xStdioMutex = xSemaphoreCreateMutexStatic( &xStdioMutexBuffer );
+    }
+    #else /* if( configSUPPORT_STATIC_ALLOCATION == 1 ) */
+    {
+        xStdioMutex = xSemaphoreCreateMutex( );
+    }
+    #endif /* if( configSUPPORT_STATIC_ALLOCATION == 1 ) */
+    
+    /* FreeRTOSIPConfig is set such that no print messages will be output.
+        * Avoid compiler warnings about unused parameters. */
+    ( void ) xLogToStdout;
+    ( void ) xLogToFile;
+    ( void ) xLogToUDP;
+    ( void ) usRemotePort;
+    ( void ) ulRemoteIPAddress;
+}
+/*-----------------------------------------------------------*/
+
+void vLoggingPrintf( const char * pcFormat,
+                     ... )
+{
+    va_list vargs;
+ 
+    va_start( vargs, pcFormat );
+
+    // xSemaphoreTake( xStdioMutex, portMAX_DELAY );
+
+    vprintf( pcFormat, vargs );
+
+    // xSemaphoreGive( xStdioMutex );
+
+    va_end( vargs );
+
+}
+/*-----------------------------------------------------------*/
+
+void vPlatformInitLogging( void )
+{
+    vLoggingInit( pdTRUE, pdFALSE, pdFALSE, 0U, 0U );
+}
+/*-----------------------------------------------------------*/
